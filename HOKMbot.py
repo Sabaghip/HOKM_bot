@@ -33,7 +33,7 @@ class cart():
 class player():
 	msg_zamin_id=0
 	msg_carts_id=0
-	message = ""
+	message = " "
 	def __init__(self,name,carts,chatid,game_id):
 		self.name=name
 		self.carts=carts
