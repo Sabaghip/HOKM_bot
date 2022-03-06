@@ -33,6 +33,7 @@ class cart():
 class player():
 	msg_zamin_id=0
 	msg_carts_id=0
+	message = ""
 	def __init__(self,name,carts,chatid,game_id):
 		self.name=name
 		self.carts=carts
@@ -294,6 +295,10 @@ def update_game(game_id):
 	l_h=my_split(data[17]," ")
 	last_high=cart(l_h[1],int(l_h[0]))
 	rounds_to_win=int(data[18])
+	messages = data[19].split(">")
+	for i in range(int(tedad)):
+		players[i].message = messages[i]
+
 
 
 def update_file(game_id):
@@ -325,6 +330,9 @@ def update_file(game_id):
 	for i in players:
 		f.write(str(i.msg_zamin_id)+" ")
 	f.write("\n"+str(team1_wins_t)+"\n"+str(team2_wins_t)+"\n"+str(size_zamin)+"\n"+str(last_high.adad)+" "+last_high.shekl+"\n"+str(rounds_to_win))
+	f.write("\n")
+	for i in players :
+		f.write(i.message + ">")
 	f.close()
 
 
@@ -473,17 +481,17 @@ def show_cards():
 		reply_zamin=InlineKeyboardMarkup()
 
 
-		reply_zamin.row(InlineKeyboardButton(" ",callback_data="none"),InlineKeyboardButton(players[0].name,callback_data="none"),InlineKeyboardButton(" ",callback_data="none"))
+		reply_zamin.row(InlineKeyboardButton(players[0].message,callback_data="none"),InlineKeyboardButton(players[0].name,callback_data="none"),InlineKeyboardButton(players[0].message,callback_data="none"))
 
 
-		reply_zamin.row(InlineKeyboardButton(" ",callback_data="none"),InlineKeyboardButton(" ",callback_data="none"),zamin[0].adad != 0 and InlineKeyboardButton(zamin[0].shekl+entekhab_adad(zamin[0].adad),callback_data="none") or InlineKeyboardButton("-",callback_data="none"),InlineKeyboardButton(" ",callback_data="none"),InlineKeyboardButton(" ",callback_data="none"))
+		reply_zamin.row(InlineKeyboardButton(players[1].message,callback_data="none"),InlineKeyboardButton(" ",callback_data="none"),zamin[0].adad != 0 and InlineKeyboardButton(zamin[0].shekl+entekhab_adad(zamin[0].adad),callback_data="none") or InlineKeyboardButton("-",callback_data="none"),InlineKeyboardButton(" ",callback_data="none"),InlineKeyboardButton(players[3].message,callback_data="none"))
 
 		reply_zamin.row(InlineKeyboardButton(players[1].name,callback_data="none"),zamin[1].adad != 0 and InlineKeyboardButton(zamin[1].shekl+entekhab_adad(zamin[1].adad),callback_data="none") or InlineKeyboardButton("-",callback_data="none"),InlineKeyboardButton(hokm,callback_data="none"),zamin[3].adad != 0 and InlineKeyboardButton(zamin[3].shekl+entekhab_adad(zamin[3].adad),callback_data="none") or InlineKeyboardButton("-",callback_data="none"),InlineKeyboardButton(players[3].name,callback_data="none"))
 
-		reply_zamin.row(InlineKeyboardButton(" ",callback_data="none"),InlineKeyboardButton(" ",callback_data="none"),zamin[2].adad != 0 and InlineKeyboardButton(zamin[2].shekl+entekhab_adad(zamin[2].adad),callback_data="none") or InlineKeyboardButton("-",callback_data="none"),InlineKeyboardButton(" ",callback_data="none"),InlineKeyboardButton(" ",callback_data="none"))
+		reply_zamin.row(InlineKeyboardButton(players[1].message,callback_data="none"),InlineKeyboardButton(" ",callback_data="none"),zamin[2].adad != 0 and InlineKeyboardButton(zamin[2].shekl+entekhab_adad(zamin[2].adad),callback_data="none") or InlineKeyboardButton("-",callback_data="none"),InlineKeyboardButton(" ",callback_data="none"),InlineKeyboardButton(players[3].message,callback_data="none"))
 
 
-		reply_zamin.row(InlineKeyboardButton(" ",callback_data="none"),InlineKeyboardButton(players[2].name,callback_data="none"),InlineKeyboardButton(" ",callback_data="none"))
+		reply_zamin.row(InlineKeyboardButton(players[2].message,callback_data="none"),InlineKeyboardButton(players[2].name,callback_data="none"),InlineKeyboardButton(players[2].message,callback_data="none"))
 
 		bot.edit_message_text("zamin :",chat_id=players[i].chatid,reply_markup=reply_zamin,message_id=players[i].msg_zamin_id)
 		buttons_temp=[]
@@ -760,7 +768,7 @@ def botmain(user):
 
 
 
-		if usertext=="new game":
+		elif usertext=="new game":
 			if search_player(userchatid)==1:
 				bot.send_message(userchatid,"you are in a game!")
 			else:
@@ -772,7 +780,7 @@ def botmain(user):
 				bot.delete_message(userchatid, msg_temp.message_id)
 				bot.send_message(userchatid,"How many rounds :",reply_markup=reply_m,reply_to_message_id=user.message_id)
 
-		if usertext=="leave game":
+		elif usertext=="leave game":
 			if search_player(userchatid)==1:
 				update_gamelist()
 				update_game(get_player_game(userchatid))
@@ -782,14 +790,14 @@ def botmain(user):
 			else:
 				bot.send_message(userchatid,"you are not in a game.",reply_markup=hide_keyboard)
 
-		if usertext=="cancel":
+		elif usertext=="cancel":
 			msg_temp=bot.send_message(userchatid,"OK!",reply_markup=hide_keyboard)
 			bot.delete_message(userchatid,msg_temp.message_id)
 
 
 
 
-		if usertext.startswith("/start "):
+		elif usertext.startswith("/start "):
 			update_gamelist()
 			id_game=int(usertext.split()[1])
 			for i in games_list :
@@ -850,6 +858,19 @@ def botmain(user):
 									bot.edit_message_text(matn,chat_id=p.chatid,message_id=p.msg_carts_id)
 
 								entekhabe_hokm(players[hakem].carts,players[hakem].chatid)
+		else:
+			if(search_player(userchatid) == 1):
+				update_gamelist()
+				game_id = get_player_game(userchatid)
+				update_game(game_id)
+				for p in players:
+					if(p.chatid == userchatid):
+						p.message = usertext
+						break
+				update_file(game_id)
+
+
+
 	except Exception as e:
 		bot.send_message(36010289,"error in message handler.")
 		print(e)
