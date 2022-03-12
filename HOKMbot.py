@@ -875,5 +875,49 @@ def botmain(user):
 		bot.send_message(36010289,"error in message handler.")
 		print(e)
 
+@bot.message_handler(content_types=['voice'])
+def botmain1(user):
+	userchatid = user.chat.id
+	if(search_player(userchatid) == 1):
+				update_gamelist()
+				game_id = get_player_game(userchatid)
+				update_game(game_id)
+				for p in players:
+					if(p.chatid != userchatid):
+						bot.send_voice(p.chatid, user.voice.file_id, caption = user.chat.first_name)	
+
+@bot.message_handler(content_types=['photo'])
+def botmain1(user):
+	userchatid = user.chat.id
+	if(search_player(userchatid) == 1):
+				update_gamelist()
+				game_id = get_player_game(userchatid)
+				update_game(game_id)
+				for p in players:
+					if(p.chatid != userchatid):
+						bot.send_photo(p.chatid, user.photo[0].file_id, caption = user.chat.first_name)
+
+@bot.message_handler(content_types=['animation'])
+def botmain1(user):
+	userchatid = user.chat.id
+	if(search_player(userchatid) == 1):
+				update_gamelist()
+				game_id = get_player_game(userchatid)
+				update_game(game_id)
+				for p in players:
+					if(p.chatid != userchatid):
+						bot.send_animation(p.chatid, user.animation.file_id, caption = user.chat.first_name)
+
+@bot.message_handler(content_types=['sticker'])
+def botmain1(user):
+	userchatid = user.chat.id
+	if(search_player(userchatid) == 1):
+				update_gamelist()
+				game_id = get_player_game(userchatid)
+				update_game(game_id)
+				for p in players:
+					if(p.chatid != userchatid):
+						temp = bot.send_sticker(p.chatid, user.sticker.file_id)
+						bot.send_message(p.chatid, user.chat.first_name, reply_to_message_id = temp.message_id)
 
 bot.infinity_polling()
