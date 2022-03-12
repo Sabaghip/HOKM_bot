@@ -4,13 +4,14 @@ import telebot
 from telebot.types import InlineKeyboardButton,InlineKeyboardMarkup,ReplyKeyboardMarkup,ReplyKeyboardRemove
 import time
 import atexit
+import sqlite3
 
 #--------------------------------------------------
 TOKEN="5173702413:AAHR-gwmXY_e362HiaSM2ItzOC9JJKOnFOs"
 bot=telebot.TeleBot(TOKEN)
 directory=""
 #--------------------------------------------------
-
+con = sqlite3.connect(directory + "HOKM_BOT_DB.db")
 hide_keyboard=ReplyKeyboardRemove()
 
 
@@ -230,10 +231,9 @@ def entekhab_adad(adad):
 
 def update_game(game_id):
 	global players
-	for i in range(len(players)):
-		players.pop(0)
+	players.clear()
 	global zamin
-	zamin=[cart(" ",0),cart(" ",0),cart(" ",0),cart(" ",0)]
+	zamin.clear()
 	global hokm
 	global hakem
 	global turn
@@ -254,50 +254,66 @@ def update_game(game_id):
 	team2_wins=0
 	last_win=0
 	size_zamin=0
+	cur = con.execute("""SELECT * FROM all_games WHERE game_id = ?;""",[str(game_id)])
+	data = cur.fetchone()
+	
+	#players
+	tedad = int(data[1])
+	carts_x = eval(data[6])
+	carts = []
+	for i in carts_x:
+		carts.append(cart(i[1], int(i[0])))
+	players.append(player(data[10], carts, int(data[2]), game_id))
+	players[0].msg_carts_id = int(data[22])
+	players[0].msg_zamin_id = int(data[26])
+	player[0].message = data[36]
+	if tedad>1:
+		carts_x = eval(data[7])
+		carts = []
+		for i in carts_x:
+			carts.append(cart(i[1], int(i[0])))
+		players.append(player(data[11], carts, int(data[3]), game_id))
+		players[1].msg_carts_id = int(data[23])
+		players[1].msg_zamin_id = int(data[27])
+		player[1].message = data[37]
+		if tedad>2 :
+			carts_x = eval(data[8])
+			carts = []
+			for i in carts_x:
+				carts.append(cart(i[1], int(i[0])))
+			players.append(player(data[12], carts, int(data[4]), game_id))
+			players[2].msg_carts_id = int(data[24])
+			players[2].msg_zamin_id = int(data[28])
+			player[2].message = data[38]
+			if tedad>3:
+				carts_x = eval(data[9])
+				carts = []
+				for i in carts_x:
+					carts.append(cart(i[1], int(i[0])))
+				players.append(player(data[13], carts, data[5], game_id))
+				players[3].msg_carts_id = int(data[25])
+				players[3].msg_zamin_id = int(data[29])
+				player[3].message = data[39]
 
-	f=open(directory+str(game_id)+"_game.txt","r")
-	data=f.read()
-	f.close()
 
-	data=my_split(data,"\n")
-	tedad=data[0]
-	cartsx=my_split(data[3],">")
-	p1=my_split(data[1]," ")
-	p2=my_split(data[2]," ")
-	p3=my_split(data[12]," ")
-	p4=my_split(data[13]," ")
-	for i in range(int(tedad)):
-		players_id=int(p1[i])
-		players_name=p2[i]
-		carts_player=my_split(cartsx[i],"|")
-		carts=[]
-		for j in range(len(carts_player)):
-			cart_x=my_split(carts_player[j]," ")
-			carts.append(cart(cart_x[1],int(cart_x[0])))
-		players.append(player(players_name,carts,players_id,game_id))
-		players[i].msg_carts_id=int(p3[i])
-		players[i].msg_zamin_id=int(p4[i])
-	zamin_c=my_split(data[4],"|")
-	for i in range(len(zamin_c)):
-		zamin_x=my_split(zamin_c[i],"^")
-		zamin[i].shekl=zamin_x[1]
-		zamin[i].adad=int(zamin_x[0])
-	hokm=data[5]
-	hakem=int(data[6])
-	turn=int(data[7])
-	dast=data[8]
-	team1_wins=int(data[9])
-	team2_wins=int(data[10])
-	last_win=int(data[11])
-	team1_wins_t=int(data[14])
-	team2_wins_t=int(data[15])
-	size_zamin=int(data[16])
-	l_h=my_split(data[17]," ")
-	last_high=cart(l_h[1],int(l_h[0]))
-	rounds_to_win=int(data[18])
-	messages = data[19].split(">")
-	for i in range(int(tedad)):
-		players[i].message = messages[i]
+	#zamin
+	size_zamin = data[32]
+	carts_x = eval(data[14])
+	carts = []
+	for i in carts_x:
+		zamin.append(cart(i[1], int(i[0])))
+
+	hokm = data[15]
+	hakem = data[16]
+	turn = data[17]
+	dast = data[18]
+	team1_wins = data[19]
+	team2_wins = data[20]
+	last_win = data[21]
+	team1_wins_t = data[30]
+	team2_wins_t = data[31]
+	last_high = cart(data[33], data[34])
+	rounds_to_win = data[35]
 
 
 
@@ -337,45 +353,28 @@ def update_file(game_id):
 
 
 def add_game(game_id):
-	f=open(directory+"all_games.txt","a")
-	f.write(str(game_id)+"\n")
-	f.close()
+	cur = con.cursor()
+	cur.execute("""INSERT INTO all_games(gameid) VALUES(?);""",(str(game_id)))
+	con.commit();
 	games_list.append([str(game_id)])
 
 def add_player_to_game(player,game_id):
 	global games_list
-	games_list.clear()
-	f=open(directory+"all_games.txt","r")
-	games_temp=my_split(f.read(),"\n")
-	for i in games_temp:
-		game=my_split(i," ")
-		game=[int(x) for x in game]
-		games_list.append(game)
-	f.close()
 	for i in games_list:
-		if i[0]==game_id:
+		if i[0] == game_id:
 			i.append(player)
-	f=open(directory+"all_games.txt","w")
-	for i in games_list:
-		for j in i:
-			f.write(str(j)+" ")
-		f.write("\n")
-	f.close()
-
-
-	for i in range(len(players_list)):
-		players_list.pop(0)
-	f=open(directory+"all_players.txt","r")
-	players_temp=my_split(f.read(),"\n")
-	for i in players_temp:
-		players_list.append(int(i))
-	f.close()
-	players_list.append(player)
-	f=open(directory+"all_players.txt","w")
-	for i in players_list:
-		f.write(str(i))
-		f.write("\n")
-	f.close()
+	cur = con.cursor()
+	cur.execute("""SELECT FROM all_games WHERE gameid = ?;""",(str(game_id)))
+	data = cur.fetchone()
+	if(data[1] == None):
+		cur.execute("""UPDATE all_games SET player1 = ? WHERE gameid = ?;""",(str(player), str(game_id)))
+	elif(data[2] == None):
+		cur.execute("""UPDATE all_games SET player2 = ? WHERE gameid = ?;""",(str(player), str(game_id)))
+	elif(data[3] == None):
+		cur.execute("""UPDATE all_games SET player3 = ? WHERE gameid = ?;""",(str(player), str(game_id)))
+	elif(data[4] == None):
+		cur.execute("""UPDATE all_games SET player4 = ? WHERE gameid = ?;""",(str(player), str(game_id)))
+	con.commit();
 
 
 def update_gamelist():
@@ -391,13 +390,16 @@ def update_gamelist():
 
 
 def search_player(chatid):
-	f=open(directory+"all_players.txt","r")
-	plist=my_split(f.read(),"\n")
-	f.close()
-	for i in plist:
-		if(chatid==int(i)):
-			return 1
-	return 0
+	cur = con.cursor()
+	cur.execute("""SELECT ingame FROM all_players WHERE chat_id = ?;""",(str(chatid)))
+	if(cur.fetchone() == None):
+		cur.execute("""INSERT INTO all_players(chat_id, ingame) VALUES(?,?);""",(str(chatid), 0))
+		con.commit()
+		return 0
+	elif(cur.fetchone() == 0):
+		return 0
+	else:
+		return 1
 
 
 def get_player_game(userchatid):
@@ -772,7 +774,7 @@ def botmain(user):
 			if search_player(userchatid)==1:
 				bot.send_message(userchatid,"you are in a game!")
 			else:
-				random_int=random.randint(1,100000)
+				random_int=random.randint(1,1000000000)
 				reply_m=InlineKeyboardMarkup()
 				reply_m.row(InlineKeyboardButton("1",callback_data="make_game "+str(random_int)+" 1"),InlineKeyboardButton("3",callback_data="make_game "+str(random_int)+" 3"),InlineKeyboardButton("5",callback_data="make_game "+str(random_int)+" 5"),InlineKeyboardButton("7",callback_data="make_game "+str(random_int)+" 7"))
 				reply_m.row(InlineKeyboardButton("9",callback_data="make_game "+str(random_int)+" 9"),InlineKeyboardButton("11",callback_data="make_game "+str(random_int)+" 11"),InlineKeyboardButton("13",callback_data="make_game "+str(random_int)+" 13"),InlineKeyboardButton("cancel",callback_data="delete this message"))
