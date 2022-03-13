@@ -318,43 +318,95 @@ def update_game(game_id):
 
 
 def update_file(game_id):
-
-	f=open(directory+str(game_id)+"_game.txt","w")
-	f.write(str(len(players))+"\n")
-
-	for i in players:
-		f.write(str(i.chatid)+" ")
-
-	f.write("\n")
-	for i in players:
-		f.write(str(i.name)+" ")
-
-	f.write("\n")
-	for i in players:
-		for j in i.carts:
-			f.write(str(j.adad)+" "+j.shekl+"|")
-		f.write(">")
-
-	f.write("\n")
+	carts = []
+	for  i in players[0].carts :
+		carts.append([i.adad, i.shekl])
+	zacarts = []
 	for i in zamin:
-		f.write(str(i.adad)+"^"+i.shekl+"|")
+		zacarts.append([i.adad, i .shekl])
 
-	f.write("\n"+hokm+"\n"+str(hakem)+"\n"+str(turn)+"\n"+dast+"\n"+str(team1_wins)+"\n"+str(team2_wins)+"\n"+str(last_win)+"\n")
-	for i in players:
-		f.write(str(i.msg_carts_id)+" ")
-	f.write("\n")
-	for i in players:
-		f.write(str(i.msg_zamin_id)+" ")
-	f.write("\n"+str(team1_wins_t)+"\n"+str(team2_wins_t)+"\n"+str(size_zamin)+"\n"+str(last_high.adad)+" "+last_high.shekl+"\n"+str(rounds_to_win))
-	f.write("\n")
-	for i in players :
-		f.write(i.message + ">")
-	f.close()
-
-
-def add_game(game_id):
+	data = [len(players), str(players[0].chatid), repr(carts), p[0].name, repr(zacarts),hokm, hakem, turn, dast, team1_wins, team2_wins,last_win, players[0].msg_carts_id, players[0].msg_zamin_id, team1_wins_t, team2_wins_t, size_zamin,last_high.shekl, last_high.adad,players[0].message,  str(game_id)]
 	cur = con.cursor()
-	cur.execute("""INSERT INTO all_games(gameid) VALUES(?);""",(str(game_id)))
+	cur.execute("""UPDATE all_games SET 
+		players_num = ?,
+		p1_chatid = ?,
+		p1_carts = ?,
+		p1_name = ?,
+		zamin_carts = ?,
+		hokm = ?, 
+		hakem = ?, 
+		turn = ?,
+		dast = ?, 
+		team1_wins = ?,
+		team2_wins = ?,
+		last_win = ?, 
+		p1_msg_cartsid = ?, 
+		p1_msg_zaminid = ?,  
+		team1_wins_t = ?,
+		team2_wins_t = ?,
+		size_zamin = ?,
+		lasthigh_shekl = ?,
+		lasthigh_adad = ?,
+		p1msg = ?
+		WHERE gameid = ?;
+		""",data)
+	if(len(players>1)):
+		data.clear()
+		carts.clear()
+		for i in players[1].carts:
+			carts.append([i.adad, i.shekl])
+		data = [str(players[1].chatid), repr(carts), players[1].name, players[1].msg_carts_id, players[1].msg_zamin_id, players[1].message, str(game_id)]
+		cur.execute("""UPDATE all_games SET 
+			p2_chatid = ?,
+			p2_carts = ?,
+			p2_name = ?,
+			p2_msg_cartsid = ?, 
+			p2_msg_zaminid = ?,  
+			p2msg = ?
+			WHERE gameid = ?;
+			""",data)
+		if(len(players>2)):
+			data.clear()
+			carts.clear()
+			for i in players[2].carts:
+				carts.append([i.adad, i.shekl])
+			data = [str(players[2].chatid), repr(carts), players[2].name, players[2].msg_carts_id, players[2].msg_zamin_id, players[2].message, str(game_id)]
+			cur.execute("""UPDATE all_games SET 
+				p2_chatid = ?,
+				p2_carts = ?,
+				p2_name = ?,
+				p2_msg_cartsid = ?, 
+				p2_msg_zaminid = ?,  
+				p2msg = ?
+				WHERE gameid = ?;
+				""",data)
+			if(len(players>3)):
+				data.clear()
+				carts.clear()
+				for i in players[3].carts:
+					carts.append([i.adad, i.shekl])
+				data = [str(players[3].chatid), repr(carts), players[3].name, players[3].msg_carts_id, players[3].msg_zamin_id, players[3].message, str(game_id)]
+				cur.execute("""UPDATE all_games SET 
+					p2_chatid = ?,
+					p2_carts = ?,
+					p2_name = ?,
+					p2_msg_cartsid = ?, 
+					p2_msg_zaminid = ?,  
+					p2msg = ?
+					WHERE gameid = ?;
+					""",data)
+
+	con.commit()
+
+
+
+def add_game(game_id, rounds_to_win, randoms):
+	carts = []
+	for i in randoms :
+		carts.append([i.adad, i.shekl])
+	data = [str(game_id), rounds_to_win, repr(carts[0:13]), repr(carts[13,26]), repr(carts[26:39]), repr(carts[39,52]), 0]
+	cur = con.cursor()
+	cur.execute("""INSERT INTO all_games(gameid, roundstowin, p1_carts , p2_carts, p3_carts, p4_carts, players_num) VALUES(?,?,?,?,?,?,?);""",data)
 	con.commit();
 	games_list.append([str(game_id)])
 
@@ -364,112 +416,81 @@ def add_player_to_game(player,game_id):
 		if i[0] == game_id:
 			i.append(player)
 	cur = con.cursor()
-	cur.execute("""SELECT FROM all_games WHERE gameid = ?;""",(str(game_id)))
+	cur.execute("""SELECT players_num FROM all_games WHERE gameid = ?;""",[str(game_id)])
 	data = cur.fetchone()
-	if(data[1] == None):
-		cur.execute("""UPDATE all_games SET player1 = ? WHERE gameid = ?;""",(str(player), str(game_id)))
-	elif(data[2] == None):
-		cur.execute("""UPDATE all_games SET player2 = ? WHERE gameid = ?;""",(str(player), str(game_id)))
-	elif(data[3] == None):
-		cur.execute("""UPDATE all_games SET player3 = ? WHERE gameid = ?;""",(str(player), str(game_id)))
-	elif(data[4] == None):
-		cur.execute("""UPDATE all_games SET player4 = ? WHERE gameid = ?;""",(str(player), str(game_id)))
+	if(data[0] == 0):
+		cur.execute("""UPDATE all_games SET player1 = ?, players_num = ? WHERE gameid = ?;""",[str(player),1, str(game_id)])
+	elif(data[0] == 1):
+		cur.execute("""UPDATE all_games SET player2 = ?, players_num = ? WHERE gameid = ?;""",[str(player),2, str(game_id)])
+	elif(data[3] == 2):
+		cur.execute("""UPDATE all_games SET player3 = ?, players_num = ? WHERE gameid = ?;""",[str(player),3, str(game_id)])
+	elif(data[4] == 3):
+		cur.execute("""UPDATE all_games SET player4 = ?, players_num = ? WHERE gameid = ?;""",[str(player),4, str(game_id)])
+	cur.execute("""UPDATE all_players SET ingame = 1, gameid = ?""",[str(game_id)])
 	con.commit();
 
 
 def update_gamelist():
 	games_list.clear()
-	f=open(directory+"all_games.txt","r")
-	games_temp=my_split(f.read(),"\n")
-	for i in games_temp:
-		game=my_split(i," ")
-		game=[int(x) for x in game]
-		games_list.append(game)
-	f.close()
+	cur = con.cursor()
+	cur.execute("""SELECT players_num,gameid,p1_chatid,p2_chatid,p3_chatid,p4_chatid FROM all_games""")
+	data = cur.fetchall()
+	for i in range(len(data)):
+		games_list.append([int(data[i][1])])
+		for j in range(data[i][0]):
+			games_list[i].append(int(data[j + 2]))
 
 
 
 def search_player(chatid):
 	cur = con.cursor()
-	cur.execute("""SELECT ingame FROM all_players WHERE chat_id = ?;""",(str(chatid)))
-	if(cur.fetchone() == None):
-		cur.execute("""INSERT INTO all_players(chat_id, ingame) VALUES(?,?);""",(str(chatid), 0))
+	cur.execute("""SELECT ingame FROM all_players WHERE chat_id = ?;""",[str(chatid)])
+	data = cur.fetchone()
+	if(len(data) == 0):
+		cur.execute("""INSERT INTO all_players(chat_id, ingame) VALUES(?,?);""",[str(chatid), 0])
 		con.commit()
 		return 0
-	elif(cur.fetchone() == 0):
+	elif(data[0] == 0):
 		return 0
 	else:
 		return 1
 
 
 def get_player_game(userchatid):
-	for game in games_list:
-		for p in game[1:]:
-			if int(p)==userchatid:
-				return int(game[0])
-	return 0
+	cur= con.cursor()
+	cur.execute("""SELECT gameid FROM all_players WHERE chat_id = ?""",[str(userchatid)])
+	data = cur.fetchone()
+	if(len(data) == 0):
+		return 0
+	else:
+		return int(data[0])
 
 
-def make_randoms(game_id):
-	f=open(directory+"carts.txt","r")
-	carts_temp1=my_split(f.read(),"\n")
-	f.close()
+def make_randoms(game_id, n):
+
+	cur = con.cursor()
+	if(n==2):
+		cur.execute("""SELECT p2_carts FROM all_games WHERE gameid = ?""",[str(game_id)])
+	elif(n==3):
+		cur.execute("""SELECT p3_carts FROM all_games WHERE gameid = ?""",[str(game_id)])
+	elif(n==4):
+		cur.execute("""SELECT p4_carts FROM all_games WHERE gameid = ?""",[str(game_id)])
+	data = eval(curr.fetchone()[0])
 	randoms=[]
-	for i in carts_temp1 :
-		carts_temp2=i.split(">")
-		if int(carts_temp2[0])==game_id:
-			carts_string=my_split(carts_temp2[1],"|")
-			for cartx in carts_string:
-				randoms.append(cart(cartx.split(" ")[1],int(cartx.split(" ")[0])))
+	for i in data: 
+		randoms.append(cart(i[1],int(i[0])))
 	return randoms
 
 
 def delete_game(game_id):
 	update_gamelist()
 	update_game(game_id)
+	cur = con.cursor()
+	cur.execute("""UPDATE all_players SET ingame = 0, gameid = null WHERE gameid = ?""",[str(game_id)])
 	for i in players:
 		bot.delete_message(i.chatid,i.msg_carts_id)
 		bot.delete_message(i.chatid,i.msg_zamin_id)
-	f=open(directory+"all_players.txt","r")
-	data=f.read()
-	f.close()
-	players1=my_split(data,"\n")
-	players2=[int(p) for p in players1]
-	players3=players2
-	for game in games_list:
-		if game[0]==game_id:
-			for g in game:
-				for p in players2:
-					if p==g:
-						players3.remove(p)
-						break
-	f=open(directory+"all_players.txt","w")
-	for p in players3 :
-		f.write(str(p)+"\n")
-	f.close()
-	for i in range(len(games_list)):
-		if games_list[i][0]==game_id:
-			games_list.pop(i)
-			break
-	f=open(directory+"all_games.txt","w")
-	for i in games_list:
-		for j in i:
-			f.write(str(j)+" ")
-		f.write("\n")
-	f.close()
-	os.remove(directory+str(game_id)+"_game.txt")
-	f=open(directory+"carts.txt","r")
-	data=f.read()
-	f.close()
-	data=my_split(data,"\n")
-	f=open(directory+"carts.txt","w")
-	for i in data:
-		if int(i.split(">")[0])!=game_id:
-			f.write(i+"\n")
-	f.close()
-	
-
-
+	cur.execute("""DELETE FROM all_games WHERE gameid = ?""",[str(game_id)])
 
 #-------------------------------------------------------------------------------------------------------------------------------------
 
@@ -671,15 +692,7 @@ def callback_query(call):
 				userchatid=call.message.chat.id
 				userusername=call.message.chat.first_name
 				rounds_to_win=int(data[2])
-				add_game(random_int)
-				add_player_to_game(userchatid,random_int)
-				reply_m=ReplyKeyboardMarkup()
-				reply_m.add("leave game","cancel")
-				bot.send_message(userchatid,"you started a "+str(data[2])+" round(s) game\nsend game link to your friends and wait for them to join :\nhttps://t.me/hokm_pbot?start="+str(random_int),reply_markup=reply_m)
-				msg=bot.send_message(userchatid,"team 1 : "+userusername+"\nteam 2 : "+"\nwaiting for players...")
-				msg1=bot.send_message(userchatid,"zamin")
 				carts=[]
-
 				for i in range(13):
 					carts.append(cart("♠️",i+1))
 				for i in range(13):
@@ -693,16 +706,17 @@ def callback_query(call):
 					s=random.randint(0,len(carts)-1)
 					randoms.append(carts[s])
 					carts.pop(s)
+				add_game(random_int,rounds_to_win,randoms)
+				add_player_to_game(userchatid,random_int)
+				reply_m=ReplyKeyboardMarkup()
+				reply_m.add("leave game","cancel")
+				bot.send_message(userchatid,"you started a "+str(data[2])+" round(s) game\nsend game link to your friends and wait for them to join :\nhttps://t.me/hokm_pbot?start="+str(random_int),reply_markup=reply_m)
+				msg=bot.send_message(userchatid,"team 1 : "+userusername+"\nteam 2 : "+"\nwaiting for players...")
+				msg1=bot.send_message(userchatid,"zamin")
 				players.clear()
 				players.append(player(userusername,randoms[0:13],userchatid,random_int))
 				players[0].msg_carts_id=msg.message_id
 				players[0].msg_zamin_id=msg1.message_id
-				f=open(directory+"carts.txt","a")
-				f.write(str(random_int)+">")
-				for i in randoms:
-					f.write(str(i.adad)+" "+i.shekl+"|")
-				f.write("\n")
-				f.close()
 				randoms.clear()
 				update_file(random_int)
 				bot.delete_message(call.message.chat.id,call.message.message_id)
@@ -774,7 +788,7 @@ def botmain(user):
 			if search_player(userchatid)==1:
 				bot.send_message(userchatid,"you are in a game!")
 			else:
-				random_int=random.randint(1,1000000000)
+				random_int=random.randint(1,1000000)
 				reply_m=InlineKeyboardMarkup()
 				reply_m.row(InlineKeyboardButton("1",callback_data="make_game "+str(random_int)+" 1"),InlineKeyboardButton("3",callback_data="make_game "+str(random_int)+" 3"),InlineKeyboardButton("5",callback_data="make_game "+str(random_int)+" 5"),InlineKeyboardButton("7",callback_data="make_game "+str(random_int)+" 7"))
 				reply_m.row(InlineKeyboardButton("9",callback_data="make_game "+str(random_int)+" 9"),InlineKeyboardButton("11",callback_data="make_game "+str(random_int)+" 11"),InlineKeyboardButton("13",callback_data="make_game "+str(random_int)+" 13"),InlineKeyboardButton("cancel",callback_data="delete this message"))
@@ -813,10 +827,9 @@ def botmain(user):
 						if len(players)==4:
 							bot.send_message(userchatid,"game is full.")
 						else:
-							randoms=make_randoms(id_game)
 							add_player_to_game(userchatid,id_game)
 							if len(players)==1:
-								players.append(player(userusername,randoms[13:26],userchatid,id_game))
+								players.append(player(userusername,make_randoms(id_game,2),userchatid,id_game))
 								reply_m=ReplyKeyboardMarkup()
 								reply_m.add("leave game","cancel")
 								bot.send_message(userchatid,"you joined the game.",reply_markup=reply_m)
@@ -829,7 +842,7 @@ def botmain(user):
 									bot.edit_message_text(matn,chat_id=p.chatid,message_id=p.msg_carts_id,)
 								update_file(id_game)
 							elif len(players)==2:
-								players.append(player(userusername,randoms[26:39],userchatid,id_game))
+								players.append(player(userusername,make_randoms(id_game,3),userchatid,id_game))
 								reply_m=ReplyKeyboardMarkup()
 								reply_m.add("leave game","cancel")
 								bot.send_message(userchatid,"you joined the game.",reply_markup=reply_m)
@@ -843,7 +856,7 @@ def botmain(user):
 							elif len(players)==3:
 								reply_m=ReplyKeyboardMarkup()
 								reply_m.add("leave game","cancel")
-								players.append(player(userusername,randoms[39:52],userchatid,id_game))
+								players.append(player(userusername,make_randoms(id_game,4),userchatid,id_game))
 								bot.send_message(userchatid,"you joined the game.",reply_markup=reply_m)
 								msg=bot.send_message(userchatid,"team 2 : \nyour teamate is "+players[1].name)
 								msg1=bot.send_message(userchatid,"zamin")
