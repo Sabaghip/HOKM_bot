@@ -4,6 +4,7 @@ import telebot
 from telebot.types import InlineKeyboardButton,InlineKeyboardMarkup,ReplyKeyboardMarkup,ReplyKeyboardRemove
 import time
 import atexit
+from keep_alive import keep_alive
 
 #--------------------------------------------------
 TOKEN="5173702413:AAHR-gwmXY_e362HiaSM2ItzOC9JJKOnFOs"
@@ -791,8 +792,8 @@ def botmain(user):
 				bot.send_message(userchatid,"you are not in a game.",reply_markup=hide_keyboard)
 
 		elif usertext=="cancel":
-			msg_temp=bot.send_message(userchatid,"OK!",reply_markup=hide_keyboard)
-			bot.delete_message(userchatid,msg_temp.message_id)
+			msg_temp = bot.send_message(userchatid, "OK!", reply_markup=hide_keyboard)
+			bot.delete_message(userchatid, msg_temp.message_id)
 
 
 
@@ -920,4 +921,14 @@ def botmain1(user):
 						temp = bot.send_sticker(p.chatid, user.sticker.file_id)
 						bot.send_message(p.chatid, user.chat.first_name, reply_to_message_id = temp.message_id)
 
-bot.infinity_polling()
+try:
+    bot.stop_polling
+    bot.remove_webhook()
+    keep_alive()
+    bot.infinity_polling()
+except Exception as e:
+    logging.info(e)
+    bot.remove_webhook()
+    bot.stop_polling
+    keep_alive()
+    bot.infinity_polling()
