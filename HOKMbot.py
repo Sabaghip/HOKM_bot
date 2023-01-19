@@ -7,7 +7,7 @@ import atexit
 from keep_alive import keep_alive
 
 #--------------------------------------------------
-TOKEN="5173702413:AAHR-gwmXY_e362HiaSM2ItzOC9JJKOnFOs"
+TOKEN=""
 bot=telebot.TeleBot(TOKEN)
 directory=""
 #--------------------------------------------------
